@@ -1,24 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import CncMachineform from './Components/CncMachineform';
+import BreakdownForm from './Components/BreakdownForm';
+import MaintenanceScheduleForm from './Components/MaintenanceScheduleform';
+import PartForm from './Components/Part';
+import Skillsform from './Components/Skillsform';
+import WorkForceForm from './Components/WorkForceform';
+import ProductionPlanform from './Components/ProductionPlanform';
+import Toollifeform from './Components/Toolslifeform';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path='/' element={<CncMachineform />} />
+        <Route path='/breakdownform' element={<BreakdownForm />} />
+        <Route path='/maintenancescheduleform' element={<MaintenanceScheduleForm />} />
+        <Route path='/PartForm' element={<PartForm />} />
+        <Route path='/Skillsform' element={<Skillsform />} />
+        <Route path='/WorkForceForm' element={<WorkForceForm />} />
+        <Route path='/ProductionPlanform' element={<ProductionPlanform />} />
+        <Route path='/Toollifeform' element={<Toollifeform />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
