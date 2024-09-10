@@ -8,10 +8,19 @@ import Skillsform from './Components/Skillsform';
 import WorkForceForm from './Components/WorkForceform';
 import ProductionPlanform from './Components/ProductionPlanform';
 import Toollifeform from './Components/Toolslifeform';
+import TPMSForm from './Components/Tpmsform';
+import Shiftform from './Components/Shiftform';
+import PmcParameterform from './Components/PmcParameterform';
+import OperatorPerformanceform from './Components/OperatorPerformanceform';
+// import { Provider } from 'react-redux';
+// import store from './store/store'; // Import the Redux store
+ import Navbar from './Components/Navbar';
 
 function App() {
   return (
-    <BrowserRouter>
+    // <Provider store={store}>
+      <BrowserRouter>
+      <Navbar />
       <Routes>
         <Route path='/' element={<CncMachineform />} />
         <Route path='/breakdownform' element={<BreakdownForm />} />
@@ -21,8 +30,13 @@ function App() {
         <Route path='/WorkForceForm' element={<WorkForceForm />} />
         <Route path='/ProductionPlanform' element={<ProductionPlanform />} />
         <Route path='/Toollifeform' element={<Toollifeform />} />
+        <Route path='/tpmsform' element={<TPMSForm />} />
+        <Route path='/Shiftform' element={<Shiftform />} />
+        <Route path='/PmcParameterform' element={<PmcParameterform />} />
+        <Route path='/OperatorPerformanceform' element={<OperatorPerformanceform />} />
       </Routes>
     </BrowserRouter>
+  // </Provider>
   );
 }
 

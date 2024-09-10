@@ -10,13 +10,14 @@ const PartForm = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
   // Fetch parts data on component mount
   useEffect(() => {
     fetchParts();
   }, []);
 
-  const mid = "MACHINE457"
+  const mid = "MACHINE457";
 
   const fetchParts = async () => {
     try {
@@ -43,6 +44,7 @@ const PartForm = () => {
     }
     fetchParts(); // Refresh parts list
     resetForm();
+    setShowForm(false); // Hide form after submission
   };
 
   const resetForm = () => {
@@ -57,6 +59,7 @@ const PartForm = () => {
     setIsEditing(true);
     setEditId(part._id);
     setFormData(part);
+    setShowForm(true); // Show form for editing
   };
 
   const handleDelete = async (id) => {
@@ -64,58 +67,74 @@ const PartForm = () => {
     fetchParts(); // Refresh parts list
   };
 
+  const handleAdd = () => {
+    setIsEditing(false);
+    setEditId(null);
+    resetForm();
+    setShowForm(true); // Show form for adding
+  };
+
   return (
     <div className="container mt-5">
       <h1 className="mb-4">Manage Parts</h1>
 
-      {/* Form to Add/Edit Part */}
-      <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Part Name</label>
-              <input
-                type="text"
-                name="PartName"
-                className="form-control"
-                value={formData.PartName}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Part Description</label>
-              <input
-                type="text"
-                name="PartDescription"
-                className="form-control"
-                value={formData.PartDescription}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Machine ID</label>
-              <input
-                type="text"
-                name="machineId"
-                className="form-control"
-                value={formData.machineId}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" className="btn btn-primary">
-          {isEditing ? 'Update Part' : 'Add Part'}
+      {/* Button to Add New Part */}
+      {!showForm && (
+        <button className="btn btn-primary mb-3" onClick={handleAdd}>
+          Add New Part
         </button>
-      </form>
+      )}
+
+      {/* Conditionally Render Form */}
+      {showForm && (
+        <form onSubmit={handleSubmit}>
+          <div className="row">
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Part Name</label>
+                <input
+                  type="text"
+                  name="PartName"
+                  className="form-control"
+                  value={formData.PartName}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Part Description</label>
+                <input
+                  type="text"
+                  name="PartDescription"
+                  className="form-control"
+                  value={formData.PartDescription}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Machine ID</label>
+                <input
+                  type="text"
+                  name="machineId"
+                  className="form-control"
+                  value={formData.machineId}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" className="btn btn-primary">
+            {isEditing ? 'Update Part' : 'Add Part'}
+          </button>
+        </form>
+      )}
 
       {/* Display Table of Parts */}
       <h2 className="mt-5">Parts List</h2>

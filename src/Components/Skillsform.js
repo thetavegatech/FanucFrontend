@@ -9,6 +9,7 @@ const Skillsform = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [showForm, setShowForm] = useState(false); // New state to toggle form visibility
 
   useEffect(() => {
     fetchSkills();
@@ -39,6 +40,7 @@ const Skillsform = () => {
     }
     fetchSkills(); // Refresh skills list
     resetForm();
+    setShowForm(false); // Hide form after submission
   };
 
   const resetForm = () => {
@@ -52,6 +54,7 @@ const Skillsform = () => {
     setIsEditing(true);
     setEditId(skill._id);
     setFormData(skill);
+    setShowForm(true); // Show form when editing
   };
 
   const handleDelete = async (id) => {
@@ -63,74 +66,107 @@ const Skillsform = () => {
     <div className="container mt-5">
       <h1 className="mb-4">Manage Skills</h1>
 
-      {/* Form to Add/Edit Skill */}
-      <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-md-6">
-            <div className="form-group">
-              <label>Skill Name</label>
-              <input
-                type="text"
-                name="SkillName"
-                className="form-control"
-                value={formData.SkillName}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-          <div className="col-md-6">
-            <div className="form-group">
-              <label>Description</label>
-              <input
-                type="text"
-                name="Description"
-                className="form-control"
-                value={formData.Description}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" className="btn btn-primary">
-          {isEditing ? 'Update Skill' : 'Add Skill'}
+      {/* Button to Show/Hide Form */}
+      {!showForm && (
+        <button
+          className="btn btn-primary mb-4"
+          onClick={() => {
+            resetForm();
+            setShowForm(true);
+            setIsEditing(false);
+            setEditId(null);
+          }}
+        >
+          Add Skill
         </button>
-      </form>
+      )}
+
+      {/* Form to Add/Edit Skill */}
+      {showForm && (
+        <form onSubmit={handleSubmit}>
+          <div className="row">
+            <div className="col-md-6">
+              <div className="form-group">
+                <label>Skill Name</label>
+                <input
+                  type="text"
+                  name="SkillName"
+                  className="form-control"
+                  value={formData.SkillName}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="col-md-6">
+              <div className="form-group">
+                <label>Description</label>
+                <input
+                  type="text"
+                  name="Description"
+                  className="form-control"
+                  value={formData.Description}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" className="btn btn-primary">
+            {isEditing ? 'Update Skill' : 'Add Skill'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary ml-2"
+            onClick={() => {
+              resetForm();
+              setShowForm(false);
+              setIsEditing(false);
+              setEditId(null);
+            }}
+          >
+            Cancel
+          </button>
+        </form>
+      )}
 
       {/* Display Table of Skills */}
-      <h2 className="mt-5">Skills List</h2>
-      <table className="table table-bordered">
-        <thead>
-          <tr>
-            <th>Skill Name</th>
-            <th>Description</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {skills.map((skill) => (
-            <tr key={skill._id}>
-              <td>{skill.SkillName}</td>
-              <td>{skill.Description}</td>
-              <td>
-                <button
-                  className="btn btn-warning mr-2"
-                  onClick={() => handleEdit(skill)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => handleDelete(skill._id)}
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {!showForm && (
+        <>
+          <h2 className="mt-5">Skills List</h2>
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th>Skill Name</th>
+                <th>Description</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {skills.map((skill) => (
+                <tr key={skill._id}>
+                  <td>{skill.SkillName}</td>
+                  <td>{skill.Description}</td>
+                  <td>
+                    <button
+                      className="btn btn-warning mr-2"
+                      onClick={() => handleEdit(skill)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handleDelete(skill._id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   );
 };
