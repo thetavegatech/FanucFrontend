@@ -16,6 +16,7 @@ const MaintenanceScheduleForm = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
 
   // Fetch maintenance schedules on component mount
   useEffect(() => {
@@ -48,6 +49,7 @@ const MaintenanceScheduleForm = () => {
     }
     fetchSchedules(); // Refresh schedule list
     resetForm();
+    setShowForm(false); // Hide the form after submission
   };
 
   const resetForm = () => {
@@ -67,6 +69,7 @@ const MaintenanceScheduleForm = () => {
     setIsEditing(true);
     setEditId(schedule.elementId);
     setFormData(schedule);
+    setShowForm(true); // Show the form when editing
   };
 
   const handleDelete = async (id) => {
@@ -74,169 +77,195 @@ const MaintenanceScheduleForm = () => {
     fetchSchedules(); // Refresh schedule list
   };
 
+  const handleAddClick = () => {
+    setShowForm(true); // Show the form when adding new data
+    setIsEditing(false);
+    resetForm(); // Reset form fields
+  };
+
   return (
     <div className="container mt-5">
       <h1 className="mb-4">Manage Maintenance Schedules</h1>
 
-      {/* Form to Add/Edit Maintenance Schedule */}
-      <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Machine ID</label>
-              <input
-                type="text"
-                name="machineId"
-                className="form-control"
-                value={formData.machineId}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Element ID</label>
-              <input
-                type="text"
-                name="elementId"
-                className="form-control"
-                value={formData.elementId}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Element Name</label>
-              <input
-                type="text"
-                name="elementName"
-                className="form-control"
-                value={formData.elementName}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Element Description</label>
-              <input
-                type="text"
-                name="elementDescription"
-                className="form-control"
-                value={formData.elementDescription}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Type</label>
-              <input
-                type="text"
-                name="type"
-                className="form-control"
-                value={formData.type}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Frequency</label>
-              <input
-                type="text"
-                name="frequency"
-                className="form-control"
-                value={formData.frequency}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="row">
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Condition Tag</label>
-              <input
-                type="text"
-                name="conditionTag"
-                className="form-control"
-                value={formData.conditionTag}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-          <div className="col-md-4">
-            <div className="form-group">
-              <label>Remark</label>
-              <input
-                type="text"
-                name="remark"
-                className="form-control"
-                value={formData.remark}
-                onChange={handleInputChange}
-              />
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" className="btn btn-primary">
-          {isEditing ? 'Update Schedule' : 'Add Schedule'}
+      {/* Button to Show Form */}
+      {!showForm && (
+        <button className="btn btn-primary mb-4" onClick={handleAddClick}>
+          Add Schedule
         </button>
-      </form>
+      )}
+
+      {/* Form to Add/Edit Maintenance Schedule */}
+      {showForm && (
+        <form onSubmit={handleSubmit}>
+          <div className="row">
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Machine ID</label>
+                <input
+                  type="text"
+                  name="machineId"
+                  className="form-control"
+                  value={formData.machineId}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Element ID</label>
+                <input
+                  type="text"
+                  name="elementId"
+                  className="form-control"
+                  value={formData.elementId}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Element Name</label>
+                <input
+                  type="text"
+                  name="elementName"
+                  className="form-control"
+                  value={formData.elementName}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Element Description</label>
+                <input
+                  type="text"
+                  name="elementDescription"
+                  className="form-control"
+                  value={formData.elementDescription}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Type</label>
+                <input
+                  type="text"
+                  name="type"
+                  className="form-control"
+                  value={formData.type}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Frequency</label>
+                <input
+                  type="text"
+                  name="frequency"
+                  className="form-control"
+                  value={formData.frequency}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Condition Tag</label>
+                <input
+                  type="text"
+                  name="conditionTag"
+                  className="form-control"
+                  value={formData.conditionTag}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Remark</label>
+                <input
+                  type="text"
+                  name="remark"
+                  className="form-control"
+                  value={formData.remark}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" className="btn btn-primary">
+            {isEditing ? 'Update Schedule' : 'Add Schedule'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary ms-2"
+            onClick={() => setShowForm(false)}
+          >
+            Cancel
+          </button>
+        </form>
+      )}
 
       {/* Display Table of Maintenance Schedules */}
-      <h2 className="mt-5">Maintenance Schedule List</h2>
-      <table className="table table-bordered">
-        <thead>
-          <tr>
-            <th>Machine ID</th>
-            <th>Element ID</th>
-            <th>Element Name</th>
-            <th>Element Description</th>
-            <th>Type</th>
-            <th>Frequency</th>
-            <th>Condition Tag</th>
-            <th>Remark</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {schedules.map((schedule) => (
-            <tr key={schedule._id}>
-              <td>{schedule.machineId}</td>
-              <td>{schedule.elementId}</td>
-              <td>{schedule.elementName}</td>
-              <td>{schedule.elementDescription}</td>
-              <td>{schedule.type}</td>
-              <td>{schedule.frequency}</td>
-              <td>{schedule.conditionTag}</td>
-              <td>{schedule.remark}</td>
-              <td>
-                <button
-                  className="btn btn-warning mr-2"
-                  onClick={() => handleEdit(schedule)}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => handleDelete(schedule.elementId)}
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {!showForm && (
+        <>
+          <h2 className="mt-5">Maintenance Schedule List</h2>
+          <table className="table table-bordered">
+            <thead>
+              <tr>
+                <th>Machine ID</th>
+                <th>Element ID</th>
+                <th>Element Name</th>
+                <th>Element Description</th>
+                <th>Type</th>
+                <th>Frequency</th>
+                <th>Condition Tag</th>
+                <th>Remark</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {schedules.map((schedule) => (
+                <tr key={schedule._id}>
+                  <td>{schedule.machineId}</td>
+                  <td>{schedule.elementId}</td>
+                  <td>{schedule.elementName}</td>
+                  <td>{schedule.elementDescription}</td>
+                  <td>{schedule.type}</td>
+                  <td>{schedule.frequency}</td>
+                  <td>{schedule.conditionTag}</td>
+                  <td>{schedule.remark}</td>
+                  <td>
+                    <button
+                      className="btn btn-warning btn-sm me-2"
+                      onClick={() => handleEdit(schedule)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(schedule.elementId)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
     </div>
   );
 };
