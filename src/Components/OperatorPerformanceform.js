@@ -49,8 +49,10 @@ const OperatorPerformanceform = () => {
     try {
       if (editingId) {
         await axios.put(`http://localhost:5001/api/operator-performance/${editingId}`, form);
+        alert('Performance record updated successfully!');
       } else {
         await axios.post('http://localhost:5001/api/operator-performance', form);
+        alert('Performance record created successfully!');
       }
       fetchPerformanceData();
       resetForm();
@@ -91,11 +93,14 @@ const OperatorPerformanceform = () => {
 
   // Handle delete
   const handleDelete = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5001/api/operator-performance/${id}`);
-      fetchPerformanceData();
-    } catch (error) {
-      console.error('Error deleting performance data', error);
+    if (window.confirm('Are you sure you want to delete this performance record?')) {
+      try {
+        await axios.delete(`http://localhost:5001/api/operator-performance/${id}`);
+        alert('Performance record deleted successfully!');
+        fetchPerformanceData();
+      } catch (error) {
+        console.error('Error deleting performance data', error);
+      }
     }
   };
 

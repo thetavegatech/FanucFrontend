@@ -9,7 +9,7 @@ const Skillsform = () => {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [showForm, setShowForm] = useState(false); // New state to toggle form visibility
+  const [showForm, setShowForm] = useState(false); // State to toggle form visibility
 
   useEffect(() => {
     fetchSkills();
@@ -31,16 +31,22 @@ const Skillsform = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isEditing) {
-      await axios.put(`http://localhost:5001/api/skills/update/${editId}`, formData);
-      setIsEditing(false);
-      setEditId(null);
-    } else {
-      await axios.post('http://localhost:5001/api/skills/create', formData);
+    try {
+      if (isEditing) {
+        await axios.put(`http://localhost:5001/api/skills/update/${editId}`, formData);
+        window.alert('Record updated successfully!');
+        setIsEditing(false);
+        setEditId(null);
+      } else {
+        await axios.post('http://localhost:5001/api/skills/create', formData);
+        window.alert('Record created successfully!');
+      }
+      fetchSkills(); // Refresh skills list
+      resetForm();
+      setShowForm(false); // Hide form after submission
+    } catch (error) {
+      console.error('Error saving skill data:', error);
     }
-    fetchSkills(); // Refresh skills list
-    resetForm();
-    setShowForm(false); // Hide form after submission
   };
 
   const resetForm = () => {
@@ -54,12 +60,20 @@ const Skillsform = () => {
     setIsEditing(true);
     setEditId(skill._id);
     setFormData(skill);
-    setShowForm(true); // Show form when editing
+    setShowForm(true); // Show form for editing
   };
 
   const handleDelete = async (id) => {
-    await axios.delete(`http://localhost:5001/api/skills/delete/${id}`);
-    fetchSkills(); // Refresh skills list
+    const confirmDelete = window.confirm('Are you sure you want to delete this record?');
+    if (confirmDelete) {
+      try {
+        await axios.delete(`http://localhost:5001/api/skills/delete/${id}`);
+        window.alert('Record deleted successfully!');
+        fetchSkills(); // Refresh skills list
+      } catch (error) {
+        console.error('Error deleting skill:', error);
+      }
+    }
   };
 
   return (
@@ -112,12 +126,12 @@ const Skillsform = () => {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary me-2">
             {isEditing ? 'Update Skill' : 'Add Skill'}
           </button>
           <button
             type="button"
-            className="btn btn-secondary ml-2"
+            className="btn btn-secondary me-2"
             onClick={() => {
               resetForm();
               setShowForm(false);
@@ -149,13 +163,13 @@ const Skillsform = () => {
                   <td>{skill.Description}</td>
                   <td>
                     <button
-                      className="btn btn-warning mr-2"
+                      className="btn btn-warning me-2"
                       onClick={() => handleEdit(skill)}
                     >
                       Edit
                     </button>
                     <button
-                      className="btn btn-danger"
+                      className="btn btn-danger me-2"
                       onClick={() => handleDelete(skill._id)}
                     >
                       Delete

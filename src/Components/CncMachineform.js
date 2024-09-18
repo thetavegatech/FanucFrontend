@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { ipv4 } from 'ip-validator';
 
 const CncMachineform = () => {
   const [machines, setMachines] = useState([]);
   const [formData, setFormData] = useState({
     machineId: '',
     organizationId: '',
-    assetId: '',
+    // assetId: '',
     machineName: '',
     machineType: '',
     status: '',
     location: '',
+    cell: '',
     AssignedOperator: '',
     machineMake: '',
     machineModel: '',
@@ -24,6 +26,8 @@ const CncMachineform = () => {
     machineCategory: '',
     otherDetails: ''
   });
+
+  
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -49,19 +53,23 @@ const CncMachineform = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateIPv4(formData.machineIP)) {
+      alert('Invalid IPv4 address format.');
+      return;
+    }
     try {
       if (isEditing) {
         await axios.put(`http://localhost:5001/api/machines/machine/${editId}`, formData);
-        alert('Record updated successfully'); // Success message for update
+        alert('Record updated successfully');
         setIsEditing(false);
         setEditId(null);
       } else {
         await axios.post('http://localhost:5001/api/machines/register', formData);
-        alert('Data saved successfully'); // Success message for creation
+        alert('Data saved successfully');
       }
-      fetchMachines(); // Refresh machine list
+      fetchMachines();
       resetForm();
-      setShowForm(false); // Hide form after submission
+      setShowForm(false);
     } catch (error) {
       console.error('Error saving data:', error);
       alert('An error occurred while saving data');
@@ -72,11 +80,12 @@ const CncMachineform = () => {
     setFormData({
       machineId: '',
       organizationId: '',
-      assetId: '',
+      // assetId: '',
       machineName: '',
       machineType: '',
       status: '',
       location: '',
+      cell: '',
       AssignedOperator: '',
       machineMake: '',
       machineModel: '',
@@ -96,15 +105,15 @@ const CncMachineform = () => {
     setIsEditing(true);
     setEditId(machine.machineId);
     setFormData(machine);
-    setShowForm(true); // Show form for editing
+    setShowForm(true);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this record?')) {
       try {
         await axios.delete(`http://localhost:5001/api/machines/machine/${id}`);
-        alert('Record deleted successfully'); // Success message for deletion
-        fetchMachines(); // Refresh machine list
+        alert('Record deleted successfully');
+        fetchMachines();
       } catch (error) {
         console.error('Error deleting record:', error);
         alert('An error occurred while deleting the record');
@@ -112,18 +121,42 @@ const CncMachineform = () => {
     }
   };
 
+  const [techNames, setTechNames] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Function to fetch technician names
+  const fetchTechnicianNames = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/workforce');
+      setTechNames(response.data); // Set the technician names in state
+      setLoading(false); // Set loading to false after data is loaded
+    } catch (err) {
+      setError('Error fetching technician names');
+      setLoading(false);
+    }
+  };
+
+  // Use useEffect to fetch data when component mounts
+  useEffect(() => {
+    fetchTechnicianNames();
+  }, []);
+
+  const validateIPv4 = (ip) => {
+    // Use ipv4 from ip-validator to check if the IP is valid
+    return ipv4(ip);
+  };
+
   return (
     <div className="container mt-1">
       <h1 className="mb-1">Manage CNC Machines</h1>
 
-      {/* Button to Show Form */}
       {!showForm && (
         <button className="btn btn-primary mb-1" onClick={() => setShowForm(true)}>
           Add Data
         </button>
       )}
 
-      {/* Conditional Rendering: Form or Table */}
       {showForm ? (
         <form onSubmit={handleSubmit}>
           <div className="row">
@@ -153,7 +186,7 @@ const CncMachineform = () => {
                 />
               </div>
             </div>
-            <div className="col-md-4">
+            {/* <div className="col-md-4">
               <div className="form-group">
                 <label>Asset ID</label>
                 <input
@@ -165,7 +198,7 @@ const CncMachineform = () => {
                   required
                 />
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="row">
@@ -223,16 +256,43 @@ const CncMachineform = () => {
             </div>
             <div className="col-md-4">
               <div className="form-group">
-                <label>Assigned Operator</label>
+                <label>Cell</label>
                 <input
                   type="text"
-                  name="AssignedOperator"
+                  name="cell"
                   className="form-control"
-                  value={formData.AssignedOperator}
+                  value={formData.cell}
                   onChange={handleInputChange}
                 />
               </div>
             </div>
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Assigned Technician</label>
+                {loading ? (
+                  <p>Loading...</p>
+                ) : error ? (
+                  <p>{error}</p>
+                ) : (
+                  <select
+                    name="assignedTechnician"
+                    className="form-control"
+                    value={formData.assignedTechnician}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Select a technician</option>
+                    {techNames.map((name, index) => (
+                      <option key={index} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Machine Make</label>
@@ -245,9 +305,6 @@ const CncMachineform = () => {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Machine Model</label>
@@ -272,6 +329,9 @@ const CncMachineform = () => {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Year of Manufacturing</label>
@@ -284,9 +344,6 @@ const CncMachineform = () => {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Machine IP</label>
@@ -311,6 +368,9 @@ const CncMachineform = () => {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Battery Count</label>
@@ -323,9 +383,6 @@ const CncMachineform = () => {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Machine Capacity</label>
@@ -350,6 +407,9 @@ const CncMachineform = () => {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Machine Category</label>
@@ -362,9 +422,6 @@ const CncMachineform = () => {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="row">
             <div className="col-md-12">
               <div className="form-group">
                 <label>Other Details</label>
@@ -379,10 +436,10 @@ const CncMachineform = () => {
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary me-2">
             {isEditing ? 'Update Record' : 'Save Data'}
           </button>
-          <button type="button" className="btn btn-secondary ml-2" onClick={() => setShowForm(false)}>
+          <button type="button" className="btn btn-secondary me-2" onClick={() => setShowForm(false)}>
             Cancel
           </button>
         </form>
@@ -392,23 +449,23 @@ const CncMachineform = () => {
             <tr>
               <th>Machine ID</th>
               <th>Organization ID</th>
-              <th>Asset ID</th>
+              {/* <th>Asset ID</th> */}
               <th>Machine Name</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {machines.map(machine => (
+            {machines.map((machine) => (
               <tr key={machine.machineId}>
                 <td>{machine.machineId}</td>
                 <td>{machine.organizationId}</td>
-                <td>{machine.assetId}</td>
+                {/* <td>{machine.assetId}</td> */}
                 <td>{machine.machineName}</td>
                 <td>
-                  <button className="btn btn-info btn-sm" onClick={() => handleEdit(machine)}>
+                  <button className="btn btn-info btn-sm me-2" onClick={() => handleEdit(machine)}>
                     Edit
                   </button>
-                  <button className="btn btn-danger btn-sm ml-2" onClick={() => handleDelete(machine.machineId)}>
+                  <button className="btn btn-danger btn-sm ml-2 me-2" onClick={() => handleDelete(machine.machineId)}>
                     Delete
                   </button>
                 </td>

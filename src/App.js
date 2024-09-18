@@ -15,6 +15,8 @@ import OperatorPerformanceform from './Components/OperatorPerformanceform';
 // import { Provider } from 'react-redux';
 // import store from './store/store'; // Import the Redux store
  import Navbar from './Components/Navbar';
+ import Elementform from './Components/Elementform';
+ import ShowOnDash from './Components/ShowOnDash';
 
 function App() {
   return (
@@ -34,6 +36,8 @@ function App() {
         <Route path='/Shiftform' element={<Shiftform />} />
         <Route path='/PmcParameterform' element={<PmcParameterform />} />
         <Route path='/OperatorPerformanceform' element={<OperatorPerformanceform />} />
+        <Route path='/Elementform' element={<Elementform />} />
+        <Route path='/ShowOnDash' element={<ShowOnDash />} />
       </Routes>
     </BrowserRouter>
   // </Provider>

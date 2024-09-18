@@ -5,8 +5,8 @@ const Toollifeform = () => {
   const [toolDetails, setToolDetails] = useState([]);
   const [formData, setFormData] = useState({
     machineId: '',
-    toolId: '',
-    machineName: '',
+    // toolId: '',
+    // machineName: '',
     toolNumber: '',
     toolName: '',
     setLife: '',
@@ -17,7 +17,6 @@ const Toollifeform = () => {
   const [editId, setEditId] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  // Fetch tool details data on component mount
   useEffect(() => {
     fetchToolDetails();
   }, []);
@@ -41,14 +40,16 @@ const Toollifeform = () => {
     try {
       if (isEditing) {
         await axios.put(`http://localhost:5001/api/tools/${editId}`, formData);
+        window.alert('Tool details updated successfully!');
         setIsEditing(false);
         setEditId(null);
       } else {
         await axios.post('http://localhost:5001/api/tools', formData);
+        window.alert('Tool details created successfully!');
       }
-      fetchToolDetails(); // Refresh tool details list
+      fetchToolDetails();
       resetForm();
-      setShowForm(false); // Hide form after submission
+      setShowForm(false);
     } catch (error) {
       console.error('Error saving tool details:', error);
     }
@@ -57,8 +58,8 @@ const Toollifeform = () => {
   const resetForm = () => {
     setFormData({
       machineId: '',
-      toolId: '',
-      machineName: '',
+      // toolId: '',
+      // machineName: '',
       toolNumber: '',
       toolName: '',
       setLife: '',
@@ -71,52 +72,90 @@ const Toollifeform = () => {
     setIsEditing(true);
     setEditId(tool.toolId);
     setFormData(tool);
-    setShowForm(true); // Show form when editing
+    setShowForm(true);
   };
 
   const handleDelete = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5001/api/tools/${id}`);
-      fetchToolDetails(); // Refresh tool details list
-    } catch (error) {
-      console.error('Error deleting tool details:', error);
+    const confirmDelete = window.confirm('Are you sure you want to delete this record?');
+    if (confirmDelete) {
+      try {
+        await axios.delete(`http://localhost:5001/api/tools/${id}`);
+        window.alert('Tool details deleted successfully!');
+        fetchToolDetails();
+      } catch (error) {
+        console.error('Error deleting tool details:', error);
+      }
     }
   };
 
   const handleAddClick = () => {
-    setShowForm(true); // Show form when adding new tool details
-    setIsEditing(false); // Reset editing state
+    setShowForm(true);
+    setIsEditing(false);
   };
+
+
+  const [machineIds, setMachineIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Function to fetch machine data and extract only the machine IDs
+  const fetchMachineData = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/machines/ORG001');
+      const machineIds = response.data.map(machine => machine.machineId); // Extract machine IDs
+      setMachineIds(machineIds); // Set only the machine IDs in state
+      setLoading(false); // Set loading to false after data is loaded
+    } catch (err) {
+      setError('Error fetching machine data');
+      setLoading(false); // Ensure loading is stopped in case of an error
+    }
+  };
+
+  // Use useEffect to fetch data when the component mounts
+  useEffect(() => {
+    fetchMachineData();
+  }, []);
+
 
   return (
     <div className="container mt-5">
       <h1 className="mb-4">Manage Tool Details</h1>
 
-      {/* Button to show the form for adding tool details */}
       {!showForm && !isEditing && (
         <button className="btn btn-primary mb-3" onClick={handleAddClick}>
           Add Tool Details
         </button>
       )}
 
-      {/* Form to Add/Edit Tool Details */}
       {showForm && (
         <form onSubmit={handleSubmit}>
           <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Machine ID</label>
-                <input
-                  type="text"
-                  name="machineId"
-                  className="form-control"
-                  value={formData.machineId}
-                  onChange={handleInputChange}
-                  required
-                />
+
+                {/* Loading state */}
+                {loading ? (
+                  <p>Loading machine IDs...</p>
+                ) : error ? (
+                  <p>{error}</p> // Show error message if there is an error
+                ) : (
+                  <select
+                    name="machineId"
+                    className="form-control"
+                    value={formData.machineId}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="" disabled>Select Machine ID</option>
+                    {machineIds.map((id, index) => (
+                      <option key={index} value={id}>{id}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
-            <div className="col-md-4">
+            {/* <div className="col-md-4">
               <div className="form-group">
                 <label>Tool ID</label>
                 <input
@@ -128,8 +167,8 @@ const Toollifeform = () => {
                   required
                 />
               </div>
-            </div>
-            <div className="col-md-4">
+            </div> */}
+            {/* <div className="col-md-4">
               <div className="form-group">
                 <label>Machine Name</label>
                 <input
@@ -140,7 +179,7 @@ const Toollifeform = () => {
                   onChange={handleInputChange}
                 />
               </div>
-            </div>
+            </div> */}
           </div>
 
           <div className="row">
@@ -217,7 +256,7 @@ const Toollifeform = () => {
             className="btn btn-secondary ml-2"
             onClick={() => {
               resetForm();
-              setShowForm(false); // Hide form when canceling
+              setShowForm(false);
             }}
           >
             Cancel
@@ -225,7 +264,6 @@ const Toollifeform = () => {
         </form>
       )}
 
-      {/* Display Table of Tool Details */}
       {!showForm && (
         <>
           <h2 className="mt-5">Tool Details List</h2>
@@ -233,8 +271,8 @@ const Toollifeform = () => {
             <thead>
               <tr>
                 <th>Machine ID</th>
-                <th>Tool ID</th>
-                <th>Machine Name</th>
+                {/* <th>Tool ID</th> */}
+                {/* <th>Machine Name</th> */}
                 <th>Tool Number</th>
                 <th>Tool Name</th>
                 <th>Set Life</th>
@@ -247,8 +285,8 @@ const Toollifeform = () => {
               {toolDetails.map((tool) => (
                 <tr key={tool._id}>
                   <td>{tool.machineId}</td>
-                  <td>{tool.toolId}</td>
-                  <td>{tool.machineName}</td>
+                  {/* <td>{tool.toolId}</td> */}
+                  {/* <td>{tool.machineName}</td> */}
                   <td>{tool.toolNumber}</td>
                   <td>{tool.toolName}</td>
                   <td>{tool.setLife}</td>

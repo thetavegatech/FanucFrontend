@@ -7,10 +7,8 @@ const BreakdownForm = () => {
     machineName: '',
     machineId: '',
     breakdownReason: '',
-    breakdownStartDate: '',
-    breakdownEndDate: '',
-    breakdownStartTime: '',
-    breakdownEndTime: '',
+    breakdownStartDateTime: '',
+    breakdownEndDateTime: '',
     assignedTechnician: '',
     remark: '',
     shift: '',
@@ -30,20 +28,48 @@ const BreakdownForm = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [machineIds, setMachineIds] = useState([]);
+  const [techNames, setTechNames] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch breakdown data on component mount
+  const mid = "MACHINE4"; // Example machineId, can be dynamic
+
   useEffect(() => {
     fetchBreakdowns();
+    fetchMachineData();
+    fetchTechnicianNames();
   }, []);
-
-  const mid = "MACHINE457";
 
   const fetchBreakdowns = async () => {
     try {
-      const response = await axios.get(`http://localhost:5001/api/breakdowns?machineId=${mid}`);
+      const response = await axios.get(`http://localhost:5001/api/breakdowns`);
       setBreakdowns(response.data);
     } catch (error) {
       console.error('Error fetching breakdown data:', error);
+    }
+  };
+
+  const fetchMachineData = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/machines/ORG001');
+      const machineIds = response.data.map(machine => machine.machineId);
+      setMachineIds(machineIds);
+      setLoading(false);
+    } catch (err) {
+      setError('Error fetching machine data');
+      setLoading(false);
+    }
+  };
+
+  const fetchTechnicianNames = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/workforce');
+      setTechNames(response.data);
+      setLoading(false);
+    } catch (err) {
+      setError('Error fetching technician names');
+      setLoading(false);
     }
   };
 
@@ -58,8 +84,10 @@ const BreakdownForm = () => {
         await axios.put(`http://localhost:5001/api/breakdowns/${editId}`, formData);
         setIsEditing(false);
         setEditId(null);
+        window.alert('Record updated successfully!');
       } else {
         await axios.post('http://localhost:5001/api/breakdowns', formData);
+        window.alert('Record created successfully!');
       }
       fetchBreakdowns(); // Refresh breakdown list
       resetForm();
@@ -74,10 +102,8 @@ const BreakdownForm = () => {
       machineName: '',
       machineId: '',
       breakdownReason: '',
-      breakdownStartDate: '',
-      breakdownEndDate: '',
-      breakdownStartTime: '',
-      breakdownEndTime: '',
+      breakdownStartDateTime: '',
+      breakdownEndDateTime: '',
       assignedTechnician: '',
       remark: '',
       shift: '',
@@ -99,16 +125,38 @@ const BreakdownForm = () => {
   const handleEdit = (breakdown) => {
     setIsEditing(true);
     setEditId(breakdown._id);
-    setFormData(breakdown);
+
+    // Function to convert UTC date-time to local date-time
+    const formatDateTime = (dateTime) => {
+      const date = new Date(dateTime);
+      const localDateTime = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return localDateTime.toISOString().slice(0, 16);
+    };
+
+    // Convert local date to 'YYYY-MM-DD'
+    const formatDate = (date) => {
+      const d = new Date(date);
+      return d.toISOString().slice(0, 10);
+    };
+
+    setFormData({
+      ...breakdown,
+      breakdownStartDateTime: breakdown.breakdownStartDateTime ? formatDateTime(breakdown.breakdownStartDateTime) : '',
+      breakdownEndDateTime: breakdown.breakdownEndDateTime ? formatDateTime(breakdown.breakdownEndDateTime) : '',
+      targetDate: breakdown.targetDate ? formatDate(breakdown.targetDate) : ''
+    });
     setShowForm(true);
   };
 
   const handleDelete = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5001/api/breakdowns/${id}`);
-      fetchBreakdowns(); // Refresh breakdown list
-    } catch (error) {
-      console.error('Error deleting breakdown:', error);
+    if (window.confirm('Are you sure you want to delete this record?')) {
+      try {
+        await axios.delete(`http://localhost:5001/api/breakdowns/${id}`);
+        window.alert('Record deleted successfully!');
+        fetchBreakdowns(); // Refresh breakdown list
+      } catch (error) {
+        console.error('Error deleting breakdown:', error);
+      }
     }
   };
 
@@ -141,14 +189,26 @@ const BreakdownForm = () => {
             <div className="col-md-4">
               <div className="form-group">
                 <label>Machine ID</label>
-                <input
-                  type="text"
-                  name="machineId"
-                  className="form-control"
-                  value={formData.machineId}
-                  onChange={handleInputChange}
-                  required
-                />
+
+                {/* Loading state */}
+                {loading ? (
+                  <p>Loading machine IDs...</p>
+                ) : error ? (
+                  <p>{error}</p>
+                ) : (
+                  <select
+                    name="machineId"
+                    className="form-control"
+                    value={formData.machineId}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="" disabled>Select Machine ID</option>
+                    {machineIds.map((id, index) => (
+                      <option key={index} value={id}>{id}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
             <div className="col-md-4">
@@ -171,10 +231,10 @@ const BreakdownForm = () => {
               <div className="form-group">
                 <label>Breakdown Start Date</label>
                 <input
-                  type="date"
-                  name="breakdownStartDate"
+                  type="datetime-local"
+                  name="breakdownStartDateTime"
                   className="form-control"
-                  value={formData.breakdownStartDate}
+                  value={formData.breakdownStartDateTime}
                   onChange={handleInputChange}
                   required
                 />
@@ -184,53 +244,42 @@ const BreakdownForm = () => {
               <div className="form-group">
                 <label>Breakdown End Date</label>
                 <input
-                  type="date"
-                  name="breakdownEndDate"
+                  type="datetime-local"
+                  name="breakdownEndDateTime"
                   className="form-control"
-                  value={formData.breakdownEndDate}
+                  value={formData.breakdownEndDateTime}
                   onChange={handleInputChange}
                 />
               </div>
             </div>
             <div className="col-md-4">
-              <div className="form-group">
-                <label>Breakdown Start Time</label>
-                <input
-                  type="text"
-                  name="breakdownStartTime"
-                  className="form-control"
-                  value={formData.breakdownStartTime}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
+              {/* No changes needed */}
             </div>
           </div>
 
           <div className="row">
             <div className="col-md-4">
               <div className="form-group">
-                <label>Breakdown End Time</label>
-                <input
-                  type="text"
-                  name="breakdownEndTime"
-                  className="form-control"
-                  value={formData.breakdownEndTime}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
-            <div className="col-md-4">
-              <div className="form-group">
                 <label>Assigned Technician</label>
-                <input
-                  type="text"
-                  name="assignedTechnician"
-                  className="form-control"
-                  value={formData.assignedTechnician}
-                  onChange={handleInputChange}
-                  required
-                />
+                {loading ? (
+                  <p>Loading...</p>
+                ) : error ? (
+                  <p>{error}</p>
+                ) : (
+                  <select
+                    name="assignedTechnician"
+                    className="form-control"
+                    value={formData.assignedTechnician}
+                    onChange={handleInputChange}
+                  >
+                    <option value="">Select a technician</option>
+                    {techNames.map((name, index) => (
+                      <option key={index} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
             <div className="col-md-4">
@@ -245,9 +294,6 @@ const BreakdownForm = () => {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Shift</label>
@@ -257,10 +303,13 @@ const BreakdownForm = () => {
                   className="form-control"
                   value={formData.shift}
                   onChange={handleInputChange}
-                  required
                 />
               </div>
             </div>
+          </div>
+
+          {/* Additional Fields */}
+          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Line Name</label>
@@ -270,7 +319,6 @@ const BreakdownForm = () => {
                   className="form-control"
                   value={formData.lineName}
                   onChange={handleInputChange}
-                  required
                 />
               </div>
             </div>
@@ -283,13 +331,9 @@ const BreakdownForm = () => {
                   className="form-control"
                   value={formData.operations}
                   onChange={handleInputChange}
-                  required
                 />
               </div>
             </div>
-          </div>
-
-          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Breakdown Phenomenons</label>
@@ -299,23 +343,38 @@ const BreakdownForm = () => {
                   className="form-control"
                   value={formData.breakdownPhenomenons}
                   onChange={handleInputChange}
-                  required
                 />
               </div>
             </div>
+          </div>
+
+          {/* Additional Fields */}
+          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Breakdown Type</label>
-                <input
-                  type="text"
+                <select
                   name="breakdownType"
                   className="form-control"
                   value={formData.breakdownType}
                   onChange={handleInputChange}
                   required
-                />
+                >
+                  <option value="" disabled>Select Breakdown Type</option>
+                  <option value="Mechanical Failure">Mechanical Failure</option>
+                  <option value="Electrical Failure">Electrical Failure</option>
+                  <option value="Software Glitch">Software Glitch</option>
+                  <option value="Overheating">Overheating</option>
+                  <option value="Sensor Malfunction">Sensor Malfunction</option>
+                  <option value="Power Supply Issue">Power Supply Issue</option>
+                  <option value="Motor Failure">Motor Failure</option>
+                  <option value="Hydraulic Failure">Hydraulic Failure</option>
+                  <option value="Pneumatic Failure">Pneumatic Failure</option>
+                  <option value="Human Error">Human Error</option>
+                </select>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="form-group">
                 <label>Action Taken</label>
@@ -325,13 +384,9 @@ const BreakdownForm = () => {
                   className="form-control"
                   value={formData.actionTaken}
                   onChange={handleInputChange}
-                  required
                 />
               </div>
             </div>
-          </div>
-
-          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Why-Why Analysis</label>
@@ -344,6 +399,10 @@ const BreakdownForm = () => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Additional Fields */}
+          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Root Cause</label>
@@ -368,9 +427,6 @@ const BreakdownForm = () => {
                 />
               </div>
             </div>
-          </div>
-
-          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Responsibility</label>
@@ -383,6 +439,10 @@ const BreakdownForm = () => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Additional Fields */}
+          <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>HD</label>
@@ -409,77 +469,73 @@ const BreakdownForm = () => {
                 </select>
               </div>
             </div>
+            <div className="col-md-4">
+              <div className="form-group">
+                <label>Location</label>
+                <input
+                  type="text"
+                  name="location"
+                  className="form-control"
+                  value={formData.location}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Location</label>
-            <input
-              type="text"
-              name="location"
-              className="form-control"
-              value={formData.location}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary me-2">
             {isEditing ? 'Update Breakdown' : 'Add Breakdown'}
           </button>
           <button
             type="button"
-            className="btn btn-secondary ml-2"
-            onClick={() => {
-              resetForm();
-              setShowForm(false);
-              setIsEditing(false);
-              setEditId(null);
-            }}
+            className="btn btn-secondary me-2"
+            onClick={() => { resetForm(); setShowForm(false); }}
           >
             Cancel
           </button>
         </form>
       )}
 
-      {/* Display Table of Breakdowns */}
-      {!showForm && (
-        <>
-          <h2 className="mt-5">Breakdown List</h2>
-          <table className="table table-bordered">
-            <thead>
-              <tr>
-                <th>Machine Name</th>
-                <th>Machine ID</th>
-                <th>Breakdown Reason</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {breakdowns.map((breakdown) => (
-                <tr key={breakdown._id}>
-                  <td>{breakdown.machineName}</td>
-                  <td>{breakdown.machineId}</td>
-                  <td>{breakdown.breakdownReason}</td>
-                  <td>
-                    <button
-                      className="btn btn-warning mr-2"
-                      onClick={() => handleEdit(breakdown)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => handleDelete(breakdown._id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </>
-      )}
+      {/* Breakdown List */}
+      <table className="table mt-4">
+        <thead>
+          <tr>
+            <th>Machine Name</th>
+            <th>Machine ID</th>
+            <th>Breakdown Reason</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Technician</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {breakdowns.map((breakdown) => (
+            <tr key={breakdown._id}>
+              <td>{breakdown.machineName}</td>
+              <td>{breakdown.machineId}</td>
+              <td>{breakdown.breakdownReason}</td>
+              <td>{new Date(breakdown.breakdownStartDateTime).toLocaleString()}</td>
+              <td>{new Date(breakdown.breakdownEndDateTime).toLocaleString()}</td>
+              <td>{breakdown.assignedTechnician}</td>
+              <td>
+                <button
+                  className="btn btn-warning btn-sm me-2"
+                  onClick={() => handleEdit(breakdown)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn btn-danger btn-sm me-2"
+                  onClick={() => handleDelete(breakdown._id)}
+                >
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

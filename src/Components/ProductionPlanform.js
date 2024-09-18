@@ -2,51 +2,60 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const ProductionManager = () => {
-    // Static machine ID
-    const machineId = "1234"; // Example static machine ID
-
     const [productions, setProductions] = useState([]);
-    const [partId, setPartId] = useState('');
+    const [machineId, setMachineId] = useState('');
     const [cycleTime, setCycleTime] = useState('');
     const [plannedQty, setPlannedQty] = useState('');
     const [partName, setPartName] = useState('');
     const [planDescription, setPlanDescription] = useState('');
     const [editId, setEditId] = useState(null);
-    const [showForm, setShowForm] = useState(false); // New state to control form visibility
+    const [showForm, setShowForm] = useState(false);
+    const [partNames, setPartNames] = useState([]);
 
     useEffect(() => {
-        fetchProductions(); // Fetch productions initially for the static machineId
+        fetchProductions();
+        fetchPartNames();
     }, []);
 
+    // Fetch productions from the API
     const fetchProductions = async () => {
         try {
-            const response = await axios.get('http://localhost:5001/api/production', {
-                params: { machineId }
-            });
+            const response = await axios.get('http://localhost:5001/api/productionalldata');
             setProductions(response.data);
         } catch (error) {
             console.error('Error fetching productions:', error);
         }
     };
 
+    // Fetch part names from the API
+    const fetchPartNames = async () => {
+        try {
+            const response = await axios.get('http://localhost:5001/api/part/getallpartname');
+            setPartNames(response.data);
+        } catch (error) {
+            console.error('Error fetching part names:', error);
+        }
+    };
+
+    // Add or update a production
     const handleAddOrUpdate = async () => {
         try {
             const payload = {
-                machineId, // Use the static machine ID
-                PartId: partId,
+                machineId,
                 CycleTime: cycleTime,
                 PlannedQty: plannedQty,
                 PartName: partName,
-                PlanDescription: planDescription
+                PlanDescription: planDescription,
             };
 
             if (editId) {
                 await axios.put(`http://localhost:5001/api/production/${editId}`, payload);
+                alert('Record updated successfully!');
             } else {
                 await axios.post('http://localhost:5001/api/production', payload);
+                alert('Record created successfully!');
             }
-            
-            // Reset fields after submission
+
             resetForm();
             fetchProductions();
         } catch (error) {
@@ -54,64 +63,106 @@ const ProductionManager = () => {
         }
     };
 
+    // Edit a production
     const handleEdit = (production) => {
-        setPartId(production.PartId);
+        setMachineId(production.machineId);
         setCycleTime(production.CycleTime);
         setPlannedQty(production.PlannedQty);
         setPartName(production.PartName);
         setPlanDescription(production.PlanDescription);
         setEditId(production._id);
-        setShowForm(true); // Show form when editing
+        setShowForm(true);
     };
 
+    // Delete a production
     const handleDelete = async (id) => {
-        try {
-            await axios.delete(`http://localhost:5001/api/production/${id}`);
-            fetchProductions();
-        } catch (error) {
-            console.error('Error deleting production:', error);
+        const confirmDelete = window.confirm('Are you sure you want to delete this record?');
+        if (confirmDelete) {
+            try {
+                await axios.delete(`http://localhost:5001/api/production/${id}`);
+                alert('Record deleted successfully!');
+                fetchProductions();
+            } catch (error) {
+                console.error('Error deleting production:', error);
+            }
         }
     };
 
+    // Reset form fields
     const resetForm = () => {
-        setPartId('');
+        setMachineId('');
         setCycleTime('');
         setPlannedQty('');
         setPartName('');
         setPlanDescription('');
         setEditId(null);
-        setShowForm(false); // Hide form after reset
+        setShowForm(false);
     };
 
+    // Show the form for adding a new production
     const handleAddClick = () => {
         resetForm();
-        setShowForm(true); // Show form when adding new data
+        setShowForm(true);
     };
+
+    const [machineIds, setMachineIds] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Function to fetch machine data and extract only the machine IDs
+    const fetchMachineData = async () => {
+        try {
+            const response = await axios.get('http://localhost:5001/api/machines/ORG001');
+            const machineIds = response.data.map(machine => machine.machineId); // Extract machine IDs
+            setMachineIds(machineIds); // Set only the machine IDs in state
+            setLoading(false); // Set loading to false after data is loaded
+        } catch (err) {
+            setError('Error fetching machine data');
+            setLoading(false); // Ensure loading is stopped in case of an error
+        }
+    };
+
+    // Use useEffect to fetch data when the component mounts
+    useEffect(() => {
+        fetchMachineData();
+    }, []);
+
 
     return (
         <div className="container mt-4">
             <h2>Production Manager</h2>
 
-            {/* Button to Add New Production */}
             {!showForm && (
                 <button className="btn btn-primary mb-3" onClick={handleAddClick}>
                     Add New Production
                 </button>
             )}
 
-            {/* Conditionally render form */}
             {showForm && (
                 <div>
                     <div className="row mb-3">
                         <div className="col-md-4 mb-3">
-                            <label htmlFor="partId">Part ID</label>
-                            <input
-                                id="partId"
-                                type="text"
-                                className="form-control"
-                                value={partId}
-                                onChange={(e) => setPartId(e.target.value)}
-                            />
+                            <label>Machine ID</label>
+
+                            {/* Loading state */}
+                            {loading ? (
+                                <p>Loading machine IDs...</p>
+                            ) : error ? (
+                                <p>{error}</p> // Show error message if there is an error
+                            ) : (
+                                <select
+                                    name="machineId"
+                                    className="form-control"
+                                    value={machineId}
+                                    onChange={(e) => setMachineId(e.target.value)}
+                                    required
+                                >
+                                    <option value="" disabled>Select Machine ID</option>
+                                    {machineIds.map((id, index) => (
+                                        <option key={index} value={id}>{id}</option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
                         <div className="col-md-4 mb-3">
                             <label htmlFor="cycleTime">Cycle Time (seconds)</label>
@@ -137,13 +188,19 @@ const ProductionManager = () => {
                     <div className="row mb-3">
                         <div className="col-md-4 mb-3">
                             <label htmlFor="partName">Part Name</label>
-                            <input
+                            <select
                                 id="partName"
-                                type="text"
                                 className="form-control"
                                 value={partName}
                                 onChange={(e) => setPartName(e.target.value)}
-                            />
+                            >
+                                <option value="">--Select Part Name--</option>
+                                {partNames.map((name, index) => (
+                                    <option key={index} value={name}>
+                                        {name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <div className="col-md-4 mb-3">
                             <label htmlFor="planDescription">Plan Description</label>
@@ -157,7 +214,6 @@ const ProductionManager = () => {
                         </div>
                     </div>
 
-                    {/* Add/Update button */}
                     <button className="btn btn-primary mb-3" onClick={handleAddOrUpdate}>
                         {editId ? 'Update' : 'Add'}
                     </button>
@@ -167,12 +223,11 @@ const ProductionManager = () => {
                 </div>
             )}
 
-            {/* Productions table */}
             {!showForm && (
                 <table className="table table-bordered">
                     <thead>
                         <tr>
-                            <th>Part ID</th>
+                            <th>Machine Name</th>
                             <th>Cycle Time (seconds)</th>
                             <th>Planned Quantity</th>
                             <th>Part Name</th>
@@ -182,18 +237,24 @@ const ProductionManager = () => {
                     </thead>
                     <tbody>
                         {productions.length > 0 ? (
-                            productions.map(production => (
+                            productions.map((production) => (
                                 <tr key={production._id}>
-                                    <td>{production.PartId}</td>
+                                    <td>{production.machineId}</td>
                                     <td>{production.CycleTime}</td>
                                     <td>{production.PlannedQty}</td>
                                     <td>{production.PartName}</td>
                                     <td>{production.PlanDescription}</td>
                                     <td>
-                                        <button className="btn btn-warning btn-sm mr-2" onClick={() => handleEdit(production)}>
+                                        <button
+                                            className="btn btn-warning btn-sm mr-2"
+                                            onClick={() => handleEdit(production)}
+                                        >
                                             Edit
                                         </button>
-                                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(production._id)}>
+                                        <button
+                                            className="btn btn-danger btn-sm"
+                                            onClick={() => handleDelete(production._id)}
+                                        >
                                             Delete
                                         </button>
                                     </td>
@@ -201,7 +262,9 @@ const ProductionManager = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="6" className="text-center">No productions found</td>
+                                <td colSpan="5" className="text-center">
+                                    No productions found
+                                </td>
                             </tr>
                         )}
                     </tbody>

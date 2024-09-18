@@ -13,8 +13,8 @@ const WorkForceForm = () => {
     Performance: '',
     TokenNo: '',
     AssignMachine: '',
-    SkillId: '',
-    EmpId: ''
+    // SkillId: '',
+    // EmpId: ''
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -26,7 +26,7 @@ const WorkForceForm = () => {
 
   const fetchWorkforces = async () => {
     try {
-      const response = await axios.get('http://localhost:5001/api/workforce');
+      const response = await axios.get('http://localhost:5001/api/workforce/alldata');
       setWorkforces(response.data);
     } catch (error) {
       console.error('Error fetching workforce data:', error);
@@ -61,8 +61,8 @@ const WorkForceForm = () => {
       Performance: '',
       TokenNo: '',
       AssignMachine: '',
-      SkillId: '',
-      EmpId: ''
+      // SkillId: '',
+      // EmpId: ''
     });
   };
 
@@ -85,8 +85,55 @@ const WorkForceForm = () => {
     setShowForm(true); // Show form when adding a new workforce
   };
 
+  const [machineIds, setMachineIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Function to fetch machine data and extract only the machine IDs
+  const fetchMachineData = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/machines/ORG001');
+      const machineIds = response.data.map(machine => machine.machineId); // Extract machine IDs
+      setMachineIds(machineIds); // Set only the machine IDs in state
+      setLoading(false); // Set loading to false after data is loaded
+    } catch (err) {
+      setError('Error fetching machine data');
+      setLoading(false); // Ensure loading is stopped in case of an error
+    }
+  };
+
+  // Use useEffect to fetch data when the component mounts
+  useEffect(() => {
+    fetchMachineData();
+  }, []);
+
+
+  const [skills, setSkills] = useState([]);
+
+  useEffect(() => {
+    // Fetch data from the API
+    const fetchSkills = async () => {
+      try {
+        const response = await fetch('http://localhost:5001/api/skills');
+        const data = await response.json(); // response.json() contains the actual data
+        const skillNames = data.map(skill => skill.SkillName); // Extract SkillName from each skill object
+        setSkills(skillNames); // Store the skill names in state
+      } catch (error) {
+        console.error('Error fetching skills:', error);
+      }
+    };
+
+    fetchSkills(); // Call the fetch function on component mount
+  }, []);
+
+
+
+  //   useEffect(() => {
+  //     fetchSkills();
+  // }, []);
+
   return (
-    <div className="container mt-5">
+    <div className="container-fluid mt-5">
       <h1 className="mb-4">Manage WorkForce</h1>
 
       {/* Button to Add New Workforce */}
@@ -144,27 +191,38 @@ const WorkForceForm = () => {
             <div className="col-md-4">
               <div className="form-group">
                 <label>Role</label>
-                <input
-                  type="text"
+                <select
                   name="Role"
                   className="form-control"
                   value={formData.Role}
                   onChange={handleInputChange}
-                />
+                >
+                  <option value="">--Select Role--</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Production">Production</option>
+                </select>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="form-group">
                 <label>Skills</label>
-                <input
-                  type="text"
+                <select
                   name="Skills"
                   className="form-control"
                   value={formData.Skills}
                   onChange={handleInputChange}
-                />
+                >
+                  <option value="">--Select Skill--</option>
+                  {skills.map((skill, index) => (
+                    <option key={index} value={skill}>
+                      {skill}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
+
             <div className="col-md-4">
               <div className="form-group">
                 <label>Performance</label>
@@ -193,7 +251,7 @@ const WorkForceForm = () => {
               </div>
             </div>
             <div className="col-md-4">
-              <div className="form-group">
+              {/* <div className="form-group">
                 <label>Assign Machine</label>
                 <input
                   type="text"
@@ -202,9 +260,32 @@ const WorkForceForm = () => {
                   value={formData.AssignMachine}
                   onChange={handleInputChange}
                 />
+              </div> */}
+              <div className="form-group">
+                <label>AssignMachine</label>
+
+                {/* Loading state */}
+                {loading ? (
+                  <p>Loading machine IDs...</p>
+                ) : error ? (
+                  <p>{error}</p> // Show error message if there is an error
+                ) : (
+                  <select
+                    name="AssignMachine"
+                    className="form-control"
+                    value={formData.machineId}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="">Select Machine ID</option>
+                    {machineIds.map((id, index) => (
+                      <option key={index} value={id}>{id}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
-            <div className="col-md-4">
+            {/* <div className="col-md-4">
               <div className="form-group">
                 <label>Skill ID</label>
                 <input
@@ -215,10 +296,10 @@ const WorkForceForm = () => {
                   onChange={handleInputChange}
                 />
               </div>
-            </div>
+            </div> */}
           </div>
 
-          <div className="row">
+          {/* <div className="row">
             <div className="col-md-4">
               <div className="form-group">
                 <label>Employee ID</label>
@@ -231,7 +312,7 @@ const WorkForceForm = () => {
                 />
               </div>
             </div>
-          </div>
+          </div> */}
 
           <button type="submit" className="btn btn-primary">
             {isEditing ? 'Update WorkForce' : 'Add WorkForce'}
@@ -259,10 +340,10 @@ const WorkForceForm = () => {
                 <th>Role</th>
                 <th>Skills</th>
                 <th>Performance</th>
-                <th>Token No</th>
-                <th>Assign Machine</th>
-                <th>Skill ID</th>
-                <th>Employee ID</th>
+                <th>TokenNo</th>
+                <th>AssignMachine</th>
+                {/* <th>Skill ID</th> */}
+                {/* <th>Employee ID</th> */}
                 <th>Actions</th>
               </tr>
             </thead>
@@ -277,17 +358,17 @@ const WorkForceForm = () => {
                   <td>{workforce.Performance}</td>
                   <td>{workforce.TokenNo}</td>
                   <td>{workforce.AssignMachine}</td>
-                  <td>{workforce.SkillId}</td>
-                  <td>{workforce.EmpId}</td>
+                  {/* <td>{workforce.SkillId}</td> */}
+                  {/* <td>{workforce.EmpId}</td> */}
                   <td>
                     <button
-                      className="btn btn-warning mr-2"
+                      className="btn btn-warning me-2"
                       onClick={() => handleEdit(workforce)}
                     >
                       Edit
                     </button>
                     <button
-                      className="btn btn-danger"
+                      className="btn btn-danger me-2"
                       onClick={() => handleDelete(workforce._id)}
                     >
                       Delete

@@ -38,8 +38,10 @@ const Shiftform = () => {
     try {
       if (editingShiftId) {
         await axios.put(`http://localhost:5001/api/shifts/${editingShiftId}`, shiftForm);
+        alert('Shift updated successfully!');
       } else {
         await axios.post('http://localhost:5001/api/shifts', shiftForm);
+        alert('Shift created successfully!');
       }
       fetchShifts();
       resetForm();
@@ -82,11 +84,13 @@ const Shiftform = () => {
 
   // Handle delete
   const handleDelete = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5001/api/shifts/${id}`);
-      fetchShifts();
-    } catch (error) {
-      console.error('Error deleting shift', error);
+    if (window.confirm('Are you sure you want to delete this shift?')) {
+      try {
+        await axios.delete(`http://localhost:5001/api/shifts/${id}`);
+        fetchShifts();
+      } catch (error) {
+        console.error('Error deleting shift', error);
+      }
     }
   };
 

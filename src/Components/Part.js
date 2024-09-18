@@ -17,14 +17,16 @@ const PartForm = () => {
     fetchParts();
   }, []);
 
-  const mid = "MACHINE457";
+  const mid = "MACHINE457"; // Static machine ID for demonstration purposes
 
   const fetchParts = async () => {
     try {
-      const response = await axios.get(`http://localhost:5001/api/part?machineId=${mid}`);
+      const response = await axios.get(`http://localhost:5001/api/part/getall`);
       setParts(response.data);
     } catch (error) {
+      // window.alert("Part is allready exist against the Machine")
       console.error('Error fetching part data:', error);
+     
     }
   };
 
@@ -35,16 +37,22 @@ const PartForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isEditing) {
-      await axios.put(`http://localhost:5001/api/part/update/${editId}`, formData);
-      setIsEditing(false);
-      setEditId(null);
-    } else {
-      await axios.post('http://localhost:5001/api/part/create', formData);
+    try {
+      if (isEditing) {
+        await axios.put(`http://localhost:5001/api/part/update/${editId}`, formData);
+        window.alert('Record updated successfully!');
+        setIsEditing(false);
+        setEditId(null);
+      } else {
+        await axios.post('http://localhost:5001/api/part/create', formData);
+        window.alert('Record created successfully!');
+      }
+      fetchParts(); // Refresh parts list
+      resetForm();
+      setShowForm(false); // Hide form after submission
+    } catch (error) {
+      console.error('Error saving part data:', error);
     }
-    fetchParts(); // Refresh parts list
-    resetForm();
-    setShowForm(false); // Hide form after submission
   };
 
   const resetForm = () => {
@@ -63,8 +71,16 @@ const PartForm = () => {
   };
 
   const handleDelete = async (id) => {
-    await axios.delete(`http://localhost:5001/api/part/delete/${id}`);
-    fetchParts(); // Refresh parts list
+    const confirmDelete = window.confirm('Are you sure you want to delete this record?');
+    if (confirmDelete) {
+      try {
+        await axios.delete(`http://localhost:5001/api/part/delete/${id}`);
+        window.alert('Record deleted successfully!');
+        fetchParts(); // Refresh parts list
+      } catch (error) {
+        console.error('Error deleting part:', error);
+      }
+    }
   };
 
   const handleAdd = () => {
@@ -73,6 +89,29 @@ const PartForm = () => {
     resetForm();
     setShowForm(true); // Show form for adding
   };
+
+
+  const [machineIds, setMachineIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Function to fetch machine data and extract only the machine IDs
+  const fetchMachineData = async () => {
+    try {
+      const response = await axios.get('http://localhost:5001/api/machines/ORG001');
+      const machineIds = response.data.map(machine => machine.machineId); // Extract machine IDs
+      setMachineIds(machineIds); // Set only the machine IDs in state
+      setLoading(false); // Set loading to false after data is loaded
+    } catch (err) {
+      setError('Error fetching machine data');
+      setLoading(false); // Ensure loading is stopped in case of an error
+    }
+  };
+
+  // Use useEffect to fetch data when the component mounts
+  useEffect(() => {
+    fetchMachineData();
+  }, []);
 
   return (
     <div className="container mt-5">
@@ -118,19 +157,31 @@ const PartForm = () => {
             <div className="col-md-4">
               <div className="form-group">
                 <label>Machine ID</label>
-                <input
-                  type="text"
-                  name="machineId"
-                  className="form-control"
-                  value={formData.machineId}
-                  onChange={handleInputChange}
-                  required
-                />
+
+                {/* Loading state */}
+                {loading ? (
+                  <p>Loading machine IDs...</p>
+                ) : error ? (
+                  <p>{error}</p> // Show error message if there is an error
+                ) : (
+                  <select
+                    name="machineId"
+                    className="form-control"
+                    value={formData.machineId}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="" disabled>Select Machine ID</option>
+                    {machineIds.map((id, index) => (
+                      <option key={index} value={id}>{id}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
           </div>
 
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary me-2">
             {isEditing ? 'Update Part' : 'Add Part'}
           </button>
         </form>
@@ -155,13 +206,13 @@ const PartForm = () => {
               <td>{part.machineId}</td>
               <td>
                 <button
-                  className="btn btn-warning mr-2"
+                  className="btn btn-warning me-2"
                   onClick={() => handleEdit(part)}
                 >
                   Edit
                 </button>
                 <button
-                  className="btn btn-danger"
+                  className="btn btn-danger me-2"
                   onClick={() => handleDelete(part._id)}
                 >
                   Delete
